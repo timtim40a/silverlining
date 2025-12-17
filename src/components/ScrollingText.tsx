@@ -38,6 +38,23 @@ export default function ScrollingText({
     }
   }, [position]);
 
+  // Mouse wheel scrolling when paused
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (isPlaying) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 20 : -20; // scroll forward/backward by 20 chars
+      const newPosition = Math.max(0, Math.min(totalLength, position + delta));
+      onPositionChange(newPosition);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [isPlaying, position, totalLength, onPositionChange]);
+
   useEffect(() => {
     if (!isPlaying || position >= totalLength) {
       if (animationRef.current) {
