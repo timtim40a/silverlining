@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TextSegment } from './types';
 import { parseBook } from './utils/bookParser';
 import ScrollingText from './components/ScrollingText';
@@ -13,15 +13,23 @@ function App() {
   const [position, setPosition] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [loadStatus, setLoadStatus] = useState<string | null>(null);
+  const [bookName, setBookName] = useState<string | null>(null);
+
+  // Update document title when book changes
+  useEffect(() => {
+    document.title = bookName ? `${bookName} - Silver Lining` : 'Silver Lining';
+  }, [bookName]);
 
   const handleFileSelect = async (file: File) => {
     setIsLoading(true);
     setLoadStatus(`Loading "${file.name}"...`);
+    const name = file.name.replace(/\.(txt|fb2|epub)$/i, '');
     try {
       const parsedSegments = await parseBook(file);
       setSegments(parsedSegments);
       setPosition(0);
       setIsPlaying(false);
+      setBookName(name);
       const totalChars = parsedSegments.reduce((sum, seg) => sum + seg.text.length, 0);
       setLoadStatus(`Loaded "${file.name}" (${totalChars.toLocaleString()} characters)`);
     } catch (error) {
