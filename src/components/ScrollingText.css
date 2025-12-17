@@ -1,0 +1,35 @@
+.scrolling-text-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: 20px;
+  background-color: #1a1a1a;
+  position: relative;
+}
+
+.scrolling-text-content {
+  white-space: nowrap;
+  color: #ffffff;
+  line-height: 1.6;
+  display: inline-block;
+  transition: transform 0.15s linear;
+}
+
+.cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+  color: #ffffff;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
