@@ -8,7 +8,7 @@ import './App.css';
 function App() {
   const [segments, setSegments] = useState<TextSegment[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(50); // characters per second
+  const [speed, setSpeed] = useState(20); // characters per second
   const [fontSize, setFontSize] = useState(24);
   const [position, setPosition] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
