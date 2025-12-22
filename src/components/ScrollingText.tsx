@@ -23,20 +23,43 @@ export default function ScrollingText({
   const contentRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>();
   const lastTimeRef = useRef<number | null>(null);
+  const pixelOffsetRef = useRef<number>(0);
 
   // Calculate total text length
   const totalLength = segments.reduce((sum, seg) => sum + seg.text.length, 0);
 
-  // Keep the cursor visible by scrolling the content
+  // Get character width for pixel conversion
+  const getCharWidth = () => {
+    if (!contentRef.current) return fontSize * 0.6; // fallback estimate
+    const measureSpan = document.createElement('span');
+    measureSpan.style.fontSize = `${fontSize}px`;
+    measureSpan.style.fontFamily = 'Fira Code, monospace';
+    measureSpan.style.visibility = 'hidden';
+    measureSpan.style.position = 'absolute';
+    measureSpan.style.whiteSpace = 'nowrap';
+    measureSpan.textContent = 'M';
+    document.body.appendChild(measureSpan);
+    const width = measureSpan.offsetWidth;
+    document.body.removeChild(measureSpan);
+    return width;
+  };
+
+  // Convert character position to pixel offset
   useEffect(() => {
+    const charWidth = getCharWidth();
+    pixelOffsetRef.current = position * charWidth;
+  }, [position, fontSize]);
+
+  // Keep the cursor visible by scrolling the content (when not playing)
+  useEffect(() => {
+    if (isPlaying) return; // Animation handles scrolling when playing
     if (contentRef.current && containerRef.current) {
-      const contentWidth = contentRef.current.scrollWidth;
       const containerWidth = containerRef.current.clientWidth;
       // Keep cursor at the right edge with some padding
-      const offset = Math.max(0, contentWidth - containerWidth + 50);
+      const offset = Math.max(0, pixelOffsetRef.current - containerWidth + 50);
       contentRef.current.style.transform = `translateX(-${offset}px)`;
     }
-  }, [position]);
+  }, [isPlaying, position, fontSize]);
 
   // Mouse wheel scrolling when paused
   useEffect(() => {
@@ -56,13 +79,16 @@ export default function ScrollingText({
   }, [isPlaying, position, totalLength, onPositionChange]);
 
   useEffect(() => {
-    if (!isPlaying || position >= totalLength) {
+    if (!isPlaying) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
       lastTimeRef.current = null;
       return;
     }
+
+    const charWidth = getCharWidth();
+    const maxPixelOffset = totalLength * charWidth;
 
     const animate = (currentTime: number) => {
       if (lastTimeRef.current === null) {
@@ -74,10 +100,25 @@ export default function ScrollingText({
       const deltaTime = (currentTime - lastTimeRef.current) / 1000; // Convert to seconds
       lastTimeRef.current = currentTime;
 
-      const newPosition = Math.min(position + speed * deltaTime, totalLength);
+      // Scroll by pixels per second (convert speed from chars/s to pixels/s)
+      const pixelsPerSecond = speed * charWidth;
+      pixelOffsetRef.current = Math.min(
+        pixelOffsetRef.current + pixelsPerSecond * deltaTime,
+        maxPixelOffset
+      );
+
+      // Update position based on pixel offset for tracking
+      const newPosition = Math.min(pixelOffsetRef.current / charWidth, totalLength);
       onPositionChange(newPosition);
 
-      if (newPosition < totalLength) {
+      // Update transform for smooth scrolling
+      if (contentRef.current && containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        const offset = Math.max(0, pixelOffsetRef.current - containerWidth + 50);
+        contentRef.current.style.transform = `translateX(-${offset}px)`;
+      }
+
+      if (pixelOffsetRef.current < maxPixelOffset) {
         animationRef.current = requestAnimationFrame(animate);
       }
     };
@@ -89,7 +130,7 @@ export default function ScrollingText({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isPlaying, speed, position, totalLength, onPositionChange]);
+  }, [isPlaying, speed, totalLength, onPositionChange, fontSize]);
 
   // Render text segments up to current position
   const renderText = () => {
