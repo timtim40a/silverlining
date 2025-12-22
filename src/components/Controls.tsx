@@ -39,6 +39,10 @@ export default function Controls({
     }
   };
 
+  // Calculate pages (assuming ~2500 characters per page, typical for a book)
+  const CHARS_PER_PAGE = 2500;
+  const totalPages = Math.max(1, Math.ceil(totalLength / CHARS_PER_PAGE));
+  const currentPage = Math.max(1, Math.ceil(position / CHARS_PER_PAGE));
   const progress = totalLength > 0 ? (position / totalLength) * 100 : 0;
 
   return (
@@ -117,7 +121,7 @@ export default function Controls({
         <div className="progress-container">
           <div className="progress-bar" style={{ width: `${progress}%` }} />
           <span className="progress-text">
-            {Math.round(progress)}% ({Math.round(position)} / {totalLength})
+            {Math.round(progress)}% (Page {currentPage} / {totalPages}, Position {Math.round(position)} / {totalLength})
           </span>
         </div>
       </div>
