@@ -90,8 +90,8 @@ export default function Controls({
           Speed: {speed.toFixed(1)} chars/s
           <input
             type="range"
-            min="10"
-            max="200"
+            min="5"
+            max="40"
             value={speed}
             onChange={(e) => onSpeedChange(Number(e.target.value))}
             className="control-slider"
